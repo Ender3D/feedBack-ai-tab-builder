@@ -89,16 +89,20 @@ def extract_cover_art(audio_path: Path, custom_cover: Path | None, dest_jpg: Pat
     )
     return dest_jpg.is_file() and dest_jpg.stat().st_size > 0
 
+import demucs.separate
 
+#######
+####### ---Use this code to buile a .exe
+#######
 def separate_stems(audio_path: Path, out_dir: Path, device: str, log_fn=print) -> dict[str, Path]:
-    """Run Demucs htdemucs_6s (Bass, Drums, Guitar, Piano, Other, Vocals)."""
+    """Run Demucs htdemucs_6s in-process (works both in Python and frozen PyInstaller .exe)."""
     log_fn(f"[Demucs] Separating 6 stems (htdemucs_6s) on {device.upper()}...")
-    cmd = [
-        sys.executable, "-m", "demucs.separate",
-        "-n", "htdemucs_6s", "-d", device,
-        "-o", str(out_dir), str(audio_path)
-    ]
-    subprocess.run(cmd, check=True)
+    demucs.separate.main([
+        "-n", "htdemucs_6s",
+        "-d", device,
+        "-o", str(out_dir),
+        str(audio_path),
+    ])
     stem_folder = out_dir / "htdemucs_6s" / audio_path.stem
     return {
         "bass": stem_folder / "bass.wav",
@@ -108,6 +112,32 @@ def separate_stems(audio_path: Path, out_dir: Path, device: str, log_fn=print) -
         "other": stem_folder / "other.wav",
         "vocals": stem_folder / "vocals.wav",
     }
+#######
+#######
+
+######
+###### -- Use this code if launching via Python script (not frozen .exe)
+######
+#def separate_stems(audio_path: Path, out_dir: Path, device: str, log_fn=print) -> dict[str, Path]:
+#    """Run Demucs htdemucs_6s (Bass, Drums, Guitar, Piano, Other, Vocals)."""
+#    log_fn(f"[Demucs] Separating 6 stems (htdemucs_6s) on {device.upper()}...")
+#    cmd = [
+#        sys.executable, "-m", "demucs.separate",
+#        "-n", "htdemucs_6s", "-d", device,
+#        "-o", str(out_dir), str(audio_path)
+#    ]
+#    subprocess.run(cmd, check=True)
+#    stem_folder = out_dir / "htdemucs_6s" / audio_path.stem
+#    return {
+#        "bass": stem_folder / "bass.wav",
+#        "drums": stem_folder / "drums.wav",
+#        "guitar": stem_folder / "guitar.wav",
+#        "piano": stem_folder / "piano.wav",
+#        "other": stem_folder / "other.wav",
+#        "vocals": stem_folder / "vocals.wav",
+#    }
+######
+######
 
 ##part 2
 def transcribe_stem_to_notes(

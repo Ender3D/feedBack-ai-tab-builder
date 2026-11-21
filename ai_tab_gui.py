@@ -1,7 +1,15 @@
 """Dark-Mode GUI for AI Audio-to-Tab (.feedpak) Generator."""
 
 import json
+import os
 import sys
+
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
+
 import threading
 import tkinter as tk
 from pathlib import Path
