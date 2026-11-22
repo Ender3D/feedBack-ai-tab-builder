@@ -4,6 +4,8 @@ import json
 import os
 import sys
 
+APP_VERSION = "1.1.0"
+
 if sys.stdout is None:
     sys.stdout = open(os.devnull, "w", encoding="utf-8")
 if sys.stderr is None:
@@ -24,7 +26,7 @@ SETTINGS_FILE = APP_DIR / "ai_gui_settings.json"
 class AITabGUI(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("fee[dB]ack AI Audio-to-Tab Builder (Demucs + Basic Pitch)")
+        self.title(f"fee[dB]ack AI Audio-to-Tab Builder v{APP_VERSION} (Demucs + Basic Pitch)")
         self.geometry("760x620")
         self.configure(bg="#0f172a")
 

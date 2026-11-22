@@ -95,14 +95,27 @@ import demucs.separate
 ####### ---Use this code to buile a .exe
 #######
 def separate_stems(audio_path: Path, out_dir: Path, device: str, log_fn=print) -> dict[str, Path]:
-    """Run Demucs htdemucs_6s in-process (works both in Python and frozen PyInstaller .exe)."""
+    """Run Demucs htdemucs_6s in-process with automatic CPU fallback."""
     log_fn(f"[Demucs] Separating 6 stems (htdemucs_6s) on {device.upper()}...")
-    demucs.separate.main([
-        "-n", "htdemucs_6s",
-        "-d", device,
-        "-o", str(out_dir),
-        str(audio_path),
-    ])
+    try:
+        demucs.separate.main([
+            "-n", "htdemucs_6s",
+            "-d", device,
+            "-o", str(out_dir),
+            str(audio_path),
+        ])
+    except Exception as exc:
+        if device != "cpu":
+            log_fn(f"[Warn] {device.upper()} failed ({exc}); retrying on CPU...")
+            demucs.separate.main([
+                "-n", "htdemucs_6s",
+                "-d", "cpu",
+                "-o", str(out_dir),
+                str(audio_path),
+            ])
+        else:
+            raise
+
     stem_folder = out_dir / "htdemucs_6s" / audio_path.stem
     return {
         "bass": stem_folder / "bass.wav",
@@ -266,7 +279,7 @@ def transcribe_stem_to_notes(
     return notes, anchors
 ##part 3
 def detect_beat_timeline(audio_path: Path, lead_in: float = 0.0) -> dict:
-    """Estimate beats and 4/4 measure downbeats with librosa."""
+    """Estimate beats and 4/4 measure downbeats with librosa (feedpak spec v1)."""
     y, sr = librosa.load(str(audio_path), sr=22050, mono=True)
     _, beat_frames = librosa.beat.beat_track(y=y, sr=sr)
     beat_times = librosa.frames_to_time(beat_frames, sr=sr)
@@ -276,8 +289,14 @@ def detect_beat_timeline(audio_path: Path, lead_in: float = 0.0) -> dict:
             "time": round(float(bt) + lead_in, 6),
             "measure": (idx // 4) + 1 if idx % 4 == 0 else -1,
         })
-    sections = [{"name": "intro", "number": 1, "time": round(lead_in, 3)}] if beats else []
-    return {"beats": beats, "sections": sections}
+    if not beats:
+        beats.append({"time": round(lead_in, 6), "measure": 1})
+    sections = [{"name": "intro", "number": 1, "time": round(lead_in, 3)}]
+    return {
+        "version": 1,
+        "beats": beats,
+        "sections": sections,
+    }
 
 
 def convert_audio_to_ogg(audio_path: Path, ogg_dest: Path, lead_in: float = 0.0) -> None:

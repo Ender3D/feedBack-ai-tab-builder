@@ -14,9 +14,10 @@ Turn raw **`.mp3`, `.flac`, `.wav`, or `.ogg`** audio files (with no existing ta
    ```bash
    py -3.12 -m venv .venv
    .venv\Scripts\activate
-   pip install torch torchaudio --index-url https://pytorch.org
+   pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu130
    pip install demucs librosa PyYAML soundfile pretty_midi onnxruntime resampy mir-eval
    pip install basic-pitch --no-deps
+   python -c "import torch; print(torch.__version__, torch.cuda.get_arch_list()); x = torch.zeros(1, device='cuda'); print('GPU OK')"
    ```
 3. Launch the GUI:
    ```bash
